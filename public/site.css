@@ -1,0 +1,151 @@
+ body {
+      font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+      background: #e8ebf0;
+      padding: 20px;
+      margin: 0;
+    }
+
+    #chat-container {
+      max-width: 600px;
+      margin: auto;
+      background: white;
+      border-radius: 10px;
+      box-shadow: 0 4px 20px rgba(0, 0, 0, 0.1);
+      overflow: hidden;
+    }
+
+    .chat-header {
+      background-color: #4a76a8;
+      color: white;
+      padding: 15px 20px;
+      font-size: 18px;
+      font-weight: bold;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+    }
+
+    .chat-header .status {
+      font-size: 14px;
+      color: #cfe2f3;
+    }
+
+    #chat {
+      background-color: #f9f9fb;
+      padding: 20px;
+      height: 60vh;
+      overflow-y: auto;
+    }
+
+    .msg {
+      margin-bottom: 12px;
+      display: flex;
+    }
+
+    .user {
+      justify-content: flex-end;
+    }
+
+    .user .bubble {
+      background-color: #dcf8c6;
+      align-self: flex-end;
+    }
+
+    .agent {
+      justify-content: flex-start;
+    }
+
+    .agent .bubble {
+      background-color: #e2e2e2;
+      align-self: flex-start;
+    }
+
+    .bubble {
+      padding: 10px 14px;
+      border-radius: 10px;
+      max-width: 70%;
+      word-wrap: break-word;
+      white-space: pre-wrap;
+      box-shadow: 0 1px 2px rgba(0,0,0,0.05);
+    }
+
+    #controls {
+      text-align: center;
+      padding: 15px 0;
+      background: #ffffff;
+      border-top: 1px solid #ddd;
+    }
+
+    #start, #stop {
+      padding: 10px 20px;
+      margin: 0 5px;
+      font-size: 16px;
+      border: none;
+      border-radius: 5px;
+      cursor: pointer;
+    }
+
+    #start {
+      background-color: #4caf50;
+      color: white;
+    }
+
+    #start:disabled {
+      background-color: #ccc;
+      cursor: not-allowed;
+    }
+
+    #stop {
+      background-color: #f44336;
+      color: white;
+    }
+
+    #stop:disabled {
+      background-color: #ccc;
+      cursor: not-allowed;
+    }
+
+
+
+.typing {
+  align-items: center;
+  display: flex;
+  height: 17px;
+}
+.typing .dot {
+  animation: mercuryTypingAnimation 1.8s infinite ease-in-out;
+  background-color: #6CAD96 ; 
+  border-radius: 50%;
+  height: 7px;
+  margin-right: 4px;
+  vertical-align: middle;
+  width: 7px;
+  display: inline-block;
+}
+.typing .dot:nth-child(1) {
+  animation-delay: 200ms;
+}
+.typing .dot:nth-child(2) {
+  animation-delay: 300ms;
+}
+.typing .dot:nth-child(3) {
+  animation-delay: 400ms;
+}
+.typing .dot:last-child {
+  margin-right: 0;
+}
+
+@keyframes mercuryTypingAnimation {
+  0% {
+    transform: translateY(0px);
+    background-color:#6CAD96; 
+  }
+  28% {
+    transform: translateY(-7px);
+    background-color:#9ECAB9
+  }
+  44% {
+    transform: translateY(0px);
+    background-color: #B5D9CB; 
+  }
+}
