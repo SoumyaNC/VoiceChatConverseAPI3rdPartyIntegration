@@ -1,0 +1,14 @@
+Creating a half-duplex voice chat system — where only one side can speak at a time (like a walkie-talkie) — is a great idea for controlling flow and avoiding overlapping audio. 
+Especially in browser-based or Deepgram-integrated apps, this can simplify the logic and UX.
+Implementing a half-duplex voice chat model—where the user can only speak after receiving a response—introduces a structured interaction flow that simplifies both audio handling and conversational turn-taking. 
+This approach closely aligns with traditional push-to-talk communication systems and can be particularly beneficial when integrating with AI agents like Deepgram's Converse API or custom NLP pipelines.
+
+🎯 Your Goal:
+🎙️ User speaks → 🤖 Bot processes and responds → 🛑 User can’t speak again until reply finishes (TTS playback ends).
+
+✅ Benefits of Half-Duplex Design:
+Prevents interruptions
+
+Simpler timing control
+
+Ideal for call-and-response chat models
