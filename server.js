@@ -6,6 +6,12 @@ const path = require('path');
 const app = express();
 const server = http.createServer(app);
 const wss = new WebSocket.Server({ server });
+const logger = require('./logger'); 
+const fs = require('fs');
+
+// Ensure logs directory exists
+if (!fs.existsSync('./logs')) fs.mkdirSync('./logs');
+
 
 const pendingAnswers = new Map();
 const DEEPGRAM_API_KEY = process.env.DEEPGRAM_API_KEY;
@@ -43,7 +49,7 @@ app.post('/answer/:id', async (req, res) => {
   pendingAnswers.delete(questionId); // Cleanup
 
   console.log(`✅ Received answer for ${questionId}: ${answer}`);
-  
+  logger.info(`✅ Received answer for ${questionId}: ${answer}`);
   // Send text back to browser
   clientSocket.send(JSON.stringify({
     type: 'QnA',
@@ -81,7 +87,7 @@ app.post('/answer/:id', async (req, res) => {
 
 wss.on('connection', function connection(clientSocket) {
   console.log('Frontend connected');
-
+  logger.info('Frontend connected');
 
   
 
@@ -174,7 +180,7 @@ wss.on('connection', function connection(clientSocket) {
         }));
 
         console.log(`🟡 Waiting for external answer for ID: ${questionId}`);
-
+        logger.info(`🟡 Waiting for external answer for ID: ${questionId}`);
 
         // const result = await fetch("http://localhost:5001/match", {
         //   method: "POST",
