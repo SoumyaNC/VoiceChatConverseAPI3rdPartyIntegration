@@ -8,6 +8,7 @@ const server = http.createServer(app);
 const wss = new WebSocket.Server({ server });
 const logger = require('./logger'); 
 const fs = require('fs');
+const { customAlphabet } = require('nanoid');
 
 // Ensure logs directory exists
 if (!fs.existsSync('./logs')) fs.mkdirSync('./logs');
@@ -167,8 +168,9 @@ wss.on('connection', function connection(clientSocket) {
         //const transcript=question
 
         // Generate a unique ID for this question
-        const questionId = Date.now().toString() + Math.random().toString(36).substring(2, 8);
-
+        //const questionId = Date.now().toString() + Math.random().toString(36).substring(2, 8);
+        const nanoid = customAlphabet('0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz', 16);
+        const questionId=nanoid();
         // Store for later async response
         pendingAnswers.set(questionId, { question, clientSocket });
         // Optionally notify frontend that the question was received
