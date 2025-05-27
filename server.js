@@ -16,6 +16,7 @@ if (!fs.existsSync('./logs')) fs.mkdirSync('./logs');
 
 const pendingAnswers = new Map();
 const DEEPGRAM_API_KEY = process.env.DEEPGRAM_API_KEY;
+const { wordsToNumbers } = require('words-to-numbers');
 // Sample Q&A list
 const qna = {
   "what are your opening hours": "We are open from 9 AM to 8 PM.",
@@ -163,14 +164,20 @@ wss.on('connection', function connection(clientSocket) {
     //     deepgramSocket.send(JSON.stringify(reply));
     //   }
     if (parsed.type === 'ConversationText' && parsed.role === 'user') {
-        const question = parsed.content.toLowerCase().trim();
+        const question = wordsToNumbers(parsed.content.toLowerCase().trim());
         console.log('User Question: ', question);
         //const transcript=question
 
         // Generate a unique ID for this question
         //const questionId = Date.now().toString() + Math.random().toString(36).substring(2, 8);
-        const nanoid = customAlphabet('0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz', 16);
-        const questionId=nanoid();
+        //const nanoid = customAlphabet('0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz', 16);
+        //const questionId=nanoid();
+        // Define a common alphabet
+        const alphabet = '0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz';
+
+        // Create different-length ID generators
+        //const nanoid = customAlphabet(alphabet, 10);
+        const questionId=customAlphabet(alphabet, 10)();
         // Store for later async response
         pendingAnswers.set(questionId, { question, clientSocket });
         // Optionally notify frontend that the question was received
