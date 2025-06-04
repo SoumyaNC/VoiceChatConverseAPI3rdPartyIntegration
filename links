@@ -1,1 +1,41 @@
 https://b018-103-242-197-20.ngrok-free.app/
+
+
+{
+    "model": "gpt-4",
+    "temperature": 0.7,
+    "messages": [
+        {
+            "role": "user",
+            "content": "-"
+        },
+        {
+            "role": "assistant",
+            "content": "Hello. Welcome to voice chat assistance"
+        },
+        {
+            "role": "user",
+            "content": "I need to book a hotel."
+        },
+        {
+            "role": "assistant",
+            "content": "Sure, I can help you with that. Which city are you planning to visit?"
+        },
+        {
+            "role": "user",
+            "content": "Uh, maybe Mumbai."
+        },
+        {
+            "role": "assistant",
+            "content": "Great! What dates are you planning to stay in Mumbai?"
+        },
+        {
+            "role": "user",
+            "content": "Fifteenth to seventeenth of July."
+        }
+    ],
+    "stream": true,
+    "stream_options": {
+        "include_usage": true
+    }
+}
