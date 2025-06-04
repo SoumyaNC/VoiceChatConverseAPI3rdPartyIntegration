@@ -1,0 +1,403 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>Voice Chat Assistant</title>
+  <style>
+    body {
+      font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+      background: #e8ebf0;
+      padding: 20px;
+      margin: 0;
+    }
+
+    #chat-container {
+      max-width: 600px;
+      margin: auto;
+      background: white;
+      border-radius: 10px;
+      box-shadow: 0 4px 20px rgba(0, 0, 0, 0.1);
+      overflow: hidden;
+    }
+
+    .chat-header {
+      background-color: #84b1e4;
+      color: white;
+      padding: 15px 20px;
+      font-size: 18px;
+      font-weight: bold;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+    }
+
+    .chat-header .status {
+      font-size: 14px;
+      color: #0ea62f;
+    }
+
+    #chat {
+      background-color: #f9f9fb;
+      padding: 20px;
+      height: 60vh;
+      overflow-y: auto;
+    }
+
+    .msg {
+      display: flex;
+      margin-bottom: 12px;
+      align-items: flex-end;
+    }
+
+    .user {
+      justify-content: flex-end;
+    }
+
+    .agent {
+      justify-content: flex-start;
+    }
+
+    .avatar {
+      font-size: 20px;
+      margin: 0 8px;
+    }
+
+    .bubble {
+      position: relative;
+      padding: 10px 14px;
+      border-radius: 10px;
+      max-width: 70%;
+      word-wrap: break-word;
+      white-space: pre-wrap;
+      box-shadow: 0 1px 2px rgba(0,0,0,0.05);
+    }
+
+    .user .bubble {
+      background-color: #dcf8c6;
+      border-bottom-right-radius: 0;
+      margin-left: 10px;
+    }
+
+    .user .bubble::after {
+      content: '';
+      position: absolute;
+      right: -10px;
+      top: 10px;
+      border-width: 6px 0 6px 10px;
+      border-style: solid;
+      border-color: transparent transparent transparent #dcf8c6;
+    }
+
+    .agent .bubble {
+      background-color: #e2e2e2;
+      border-bottom-left-radius: 0;
+      margin-right: 10px;
+    }
+
+    .agent .bubble::after {
+      content: '';
+      position: absolute;
+      left: -10px;
+      top: 10px;
+      border-width: 6px 10px 6px 0;
+      border-style: solid;
+      border-color: transparent #e2e2e2 transparent transparent;
+    }
+
+    #controls {
+      text-align: center;
+      padding: 15px 0;
+      background: #ffffff;
+      border-top: 1px solid #ddd;
+    }
+
+    #start, #stop {
+      padding: 10px 20px;
+      margin: 0 5px;
+      font-size: 16px;
+      border: none;
+      border-radius: 5px;
+      cursor: pointer;
+      position: relative;
+    }
+
+    #start {
+      background-color: #4caf50;
+      color: white;
+      overflow: hidden;
+    }
+
+    #start.calling::after {
+      content: "";
+      position: absolute;
+      top: -5px;
+      left: -5px;
+      right: -5px;
+      bottom: -5px;
+      border-radius: 8px;
+      background: rgba(255, 255, 255, 0.2);
+      animation: pulse 1.2s infinite;
+      z-index: 0;
+    }
+
+    @keyframes pulse {
+      0% { transform: scale(1); opacity: 0.7; }
+      70% { transform: scale(1.1); opacity: 0.2; }
+      100% { transform: scale(1); opacity: 0; }
+    }
+
+    #stop {
+      background-color: #f44336;
+      color: white;
+    }
+
+    #start:disabled, #stop:disabled {
+      background-color: #ccc;
+      cursor: not-allowed;
+    }
+  </style>
+</head>
+<body>
+
+  <div id="chat-container">
+    <div class="chat-header">
+      Kiva
+      <span><span class="status">● </span>Online</span>
+    </div>
+    
+    <div id="chat" style="background-color: #87e7eb;"></div>
+
+    <div id="controls">
+      <button id="start">📞  Call</button>
+      <button id="stop" disabled>🔴 Drop</button>
+    </div>
+  </div>
+
+  <script>
+    const chat = document.getElementById('chat');
+    const startBtn = document.getElementById('start');
+    const stopBtn = document.getElementById('stop');
+    let socket, audioContext, processor, mediaStream, source;
+    let audioQueue = [];
+    let isPlaying = false;
+    let currentSource = null; 
+    let buffers = [];
+    function scrollToBottom() {
+      chat.scrollTop = chat.scrollHeight;
+    }
+
+    function appendMessage(text, sender, typingEffect = false, callback = null) {
+      const msg = document.createElement('div');
+      msg.className = `msg ${sender}`;
+      const bubble = document.createElement('div');
+      bubble.className = 'bubble';
+      msg.appendChild(bubble);
+      chat.appendChild(msg);
+      scrollToBottom();
+
+      if (typingEffect) {
+        let index = 0;
+        const interval = setInterval(() => {
+          bubble.textContent += text.charAt(index);
+          index++;
+          scrollToBottom();
+          if (index >= text.length) {
+            clearInterval(interval);
+            if (callback) callback();
+          }
+        }, 30);
+      } else {
+        bubble.textContent = text;
+        if (callback) callback();
+      }
+    }
+
+    document.getElementById('start').onclick = async () => {
+      // // Resume AudioContext
+      // if (!audioContext || audioContext.state === 'suspended') {
+      //   audioContext = new AudioContext();
+      //   await audioContext.resume();
+      // }
+
+      // // 🔇 Stop any TTS currently playing
+      // if (currentSource) {
+      //   try {
+      //     currentSource.stop();
+      //     currentSource = null;
+      //     isPlaying = false;
+      //     audioQueue = []; // Optional: clear any pending audio
+      //   } catch (err) {
+      //     console.warn('Failed to stop previous audio:', err.message);
+      //   }
+      // }
+
+      // Setup WebSocket
+      const protocol = location.protocol === 'https:' ? 'wss:' : 'ws:';
+      socket = new WebSocket(`${protocol}//${location.host}`);
+      socket.binaryType = 'arraybuffer';
+
+      socket.onopen = async () => {
+        audioContext = new AudioContext();
+        // mediaStream = await navigator.mediaDevices.getUserMedia({
+        //   audio: {
+        //     channelCount: 1, // ✅ Force mono
+        //     sampleRate: 48000
+        //   }
+        // });
+        mediaStream = await navigator.mediaDevices.getUserMedia({ audio: true });
+        console.log("🎤 Mic access granted:", mediaStream); 
+        await audioContext.audioWorklet.addModule('processor.js')
+        .then(() => console.log("✅ processor.js loaded"))
+        .catch(err => console.error("❌ processor.js failed:", err));
+
+        source = audioContext.createMediaStreamSource(mediaStream);
+        processor = new AudioWorkletNode(audioContext, 'audio-capture');
+        source.connect(processor).connect(audioContext.destination);
+        //socket.send('__welcome__');
+        processor.port.onmessage = (event) => {
+            //console.log("🎙️ Received audio chunk:", event.data);
+          if (socket.readyState === WebSocket.OPEN) {
+            //console.log('Sending Data')
+            socket.send(event.data);
+            startBtn.textContent = '📞 On Call...';
+          }
+          
+          // 🛑 Stop TTS if user starts speaking
+          // if (isPlaying && currentSource) {
+           
+          //   try {
+          //     currentSource.stop(); // Stop current audio
+          //     currentSource = null;
+          //     isPlaying = false;
+          //     audioQueue = [];      // Optional: cancel future TTS audio
+          //     console.log('🛑 TTS audio interrupted by user speech');
+          //   } catch (e) {
+          //     console.warn('Failed to stop audio on user speech:', e.message);
+          //   }
+          // }
+        };
+
+        document.getElementById('start').disabled = true;
+        document.getElementById('stop').disabled = false;
+      };
+
+      socket.onmessage = async (event) => {
+       
+        console.log(event)
+        if (typeof event.data === 'string') 
+        {
+          
+          const data = JSON.parse(event.data);
+          //console.log(data)
+           
+            
+          if (data.type === 'QnA') {
+          if (data.question != '')
+          {
+            // 🛑 Stop any audio already playing 
+            if (currentSource) {
+              try {
+                currentSource.stop();
+                currentSource = null;
+                audioQueue = [];
+                isPlaying = false;
+                console.log('🛑 Previous audio stopped due to new response');
+              } catch (e) {
+                console.warn('Error stopping previous audio:', e.message);
+              }
+            }
+              appendMessage(data.question, 'user');
+          }
+            if (data.answer != '' )
+              appendMessage(data.answer, 'agent', true, () => {
+            
+            });
+          }
+
+          if (data.type === 'ConversationText' && data.role === 'user') {
+            alert(1);
+            appendMessage(data.content, 'user');
+          }
+
+          if (data.type === 'ConversationText' && data.role === 'assistant') {
+            alert(1);
+            appendMessage(data.content, 'agent');
+          }
+        } 
+        else {
+          try {
+
+            
+
+
+            //console.log(event.data)
+            const buffer = event.data; // Already an ArrayBuffer
+            audioQueue.push(buffer); // Add to queue
+            playNextInQueue();       // Trigger playback if not already
+
+
+
+            // const audioBuffer = await audioContext.decodeAudioData(event.data);
+            // const sourceNode = audioContext.createBufferSource();
+            // sourceNode.buffer = audioBuffer;
+            // sourceNode.connect(audioContext.destination);
+            // sourceNode.start();
+          } catch (err) {
+            console.warn('Audio decode/playback failed:', err.message);
+          }
+        }
+      };
+
+      socket.onclose = () => {
+        appendMessage("🔌 Disconnected from assistant.", 'agent');
+        document.getElementById('start').disabled = false;
+        document.getElementById('stop').disabled = true;
+      };
+    };
+
+
+  async function playNextInQueue() {
+    if (isPlaying || audioQueue.length === 0) return;
+
+    isPlaying = true;
+    const buffer = audioQueue.shift();
+
+    try 
+    {
+      if (audioContext.state === 'suspended') {
+        await audioContext.resume();
+      }
+
+      const audioBuffer = await audioContext.decodeAudioData(buffer);
+      const source = audioContext.createBufferSource();
+      const gainNode = audioContext.createGain();
+      gainNode.gain.value = 1.2;
+      currentSource = source;
+      source.buffer = audioBuffer;
+      source.connect(gainNode).connect(audioContext.destination);
+
+      source.onended = () => {
+        isPlaying = false;
+        playNextInQueue(); // Play next in line
+      };
+
+      source.start();
+    } 
+    catch (e) {
+        console.warn('Audio playback failed:', e.message);
+        isPlaying = false;
+        playNextInQueue(); // Try next
+      }
+  }
+
+    document.getElementById('stop').onclick = () => {
+      if (processor) processor.disconnect();
+      if (source) source.disconnect();
+      if (mediaStream) mediaStream.getTracks().forEach(track => track.stop());
+      if (socket && socket.readyState === WebSocket.OPEN) socket.close();
+      startBtn.textContent = '📞 Call';
+    };
+  </script>
+
+</body>
+</html>
